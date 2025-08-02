@@ -1,57 +1,270 @@
-import React, { useState } from 'react';
-import { Save, X, Upload, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { mockCategories } from '../../../data/mockData';
+import BasicDetailsTab from './ProductTabs/BasicDetailsTab';
+import VariantsTab from './ProductTabs/VariantsTab';
+import MediaTab from './ProductTabs/MediaTab';
+import ReviewTab from './ProductTabs/ReviewTab';
+
+interface ProductFormData {
+  // Basic Details
+  name: string;
+  description: string;
+  basePrice: string;
+  category: string;
+  selectedOptions: Record<string, string>;
+  
+  // Variants
+  variants: Array<{
+    id: string;
+    name: string;
+    price: string;
+    stock: string;
+    sku: string;
+    options: Record<string, string>;
+  }>;
+  
+  // Media
+  images: string[];
+  videos: string[];
+  
+  // Additional
+  inStock: boolean;
+  featured: boolean;
+}
 
 const AddProduct: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
-    price: '',
-    originalPrice: '',
+    basePrice: '',
     category: '',
-    material: '',
-    gemstone: '',
-    size: '',
+    selectedOptions: {},
+    variants: [],
+    images: [],
+    videos: [],
     inStock: true,
     featured: false,
-    images: [] as string[],
   });
 
-  const [variants, setVariants] = useState([
-    { size: '', price: '', stock: '' }
-  ]);
+  const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const categories = ['rings', 'necklaces', 'earrings', 'bracelets', 'watches'];
-  const materials = ['Gold', 'Silver', 'Platinum', 'Rose Gold', 'White Gold'];
-  const gemstones = ['Diamond', 'Ruby', 'Sapphire', 'Emerald', 'Pearl', 'Amethyst'];
+  const steps = [
+    { id: 'basic', label: 'Basic Details', icon: '1' },
+    { id: 'variants', label: 'Variants', icon: '2' },
+    { id: 'media', label: 'Media', icon: '3' },
+    { id: 'review', label: 'Review', icon: '4' },
+  ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
+  // Mock category-based options
+  const getCategoryOptions = (categoryId: string) => {
+    const optionsMap: Record<string, any[]> = {
+      'rings': [
+        {
+          id: 'ring_size',
+          name: 'Ring Size',
+          type: 'select',
+          required: true,
+          values: ['5', '6', '7', '8', '9', '10', '11', '12']
+        },
+        {
+          id: 'metal_type',
+          name: 'Metal Type',
+          type: 'select',
+          required: true,
+          values: ['Gold', 'Silver', 'Platinum', 'Rose Gold', 'White Gold']
+        }
+      ],
+      'necklaces': [
+        {
+          id: 'chain_length',
+          name: 'Chain Length',
+          type: 'select',
+          required: true,
+          values: ['16"', '18"', '20"', '22"', '24"']
+        },
+        {
+          id: 'metal_type',
+          name: 'Metal Type',
+          type: 'select',
+          required: true,
+          values: ['Gold', 'Silver', 'Platinum', 'Rose Gold', 'White Gold']
+        }
+      ],
+      'earrings': [
+        {
+          id: 'earring_type',
+          name: 'Earring Type',
+          type: 'select',
+          required: true,
+          values: ['Stud', 'Drop', 'Hoop', 'Chandelier']
+        },
+        {
+          id: 'metal_type',
+          name: 'Metal Type',
+          type: 'select',
+          required: true,
+          values: ['Gold', 'Silver', 'Platinum', 'Rose Gold', 'White Gold']
+        }
+      ],
+      'bracelets': [
+        {
+          id: 'bracelet_size',
+          name: 'Bracelet Size',
+          type: 'select',
+          required: true,
+          values: ['Small (6-7")', 'Medium (7-8")', 'Large (8-9")']
+        },
+        {
+          id: 'metal_type',
+          name: 'Metal Type',
+          type: 'select',
+          required: true,
+          values: ['Gold', 'Silver', 'Platinum', 'Rose Gold', 'White Gold']
+        }
+      ],
+      'watches': [
+        {
+          id: 'watch_size',
+          name: 'Watch Size',
+          type: 'select',
+          required: true,
+          values: ['38mm', '40mm', '42mm', '44mm']
+        },
+        {
+          id: 'band_material',
+          name: 'Band Material',
+          type: 'select',
+          required: true,
+          values: ['Leather', 'Metal', 'Rubber', 'Fabric']
+        }
+      ]
+    };
+
+    return optionsMap[categoryId] || [];
   };
 
-  const addVariant = () => {
-    setVariants([...variants, { size: '', price: '', stock: '' }]);
+  useEffect(() => {
+    if (formData.category) {
+      const options = getCategoryOptions(formData.category);
+      setCategoryOptions(options);
+      // Reset selected options when category changes
+      setFormData(prev => ({ ...prev, selectedOptions: {} }));
+    }
+  }, [formData.category]);
+
+  const validateStep = (step: number): boolean => {
+    const errors: Record<string, string> = {};
+
+    switch (step) {
+      case 0: // Basic Details
+        if (!formData.name.trim()) errors.name = 'Product name is required';
+        if (!formData.description.trim()) errors.description = 'Description is required';
+        if (!formData.basePrice || parseFloat(formData.basePrice) <= 0) {
+          errors.basePrice = 'Valid base price is required';
+        }
+        if (!formData.category) errors.category = 'Category is required';
+        
+        // Validate required options
+        categoryOptions.forEach(option => {
+          if (option.required && !formData.selectedOptions[option.id]) {
+            errors[option.id] = `${option.name} is required`;
+          }
+        });
+        break;
+
+      case 1: // Variants
+        if (formData.variants.length === 0) {
+          errors.variants = 'At least one variant is required';
+        } else {
+          formData.variants.forEach((variant, index) => {
+            if (!variant.name.trim()) {
+              errors[`variant_${index}_name`] = 'Variant name is required';
+            }
+            if (!variant.price || parseFloat(variant.price) <= 0) {
+              errors[`variant_${index}_price`] = 'Valid price is required';
+            }
+            if (!variant.stock || parseInt(variant.stock) < 0) {
+              errors[`variant_${index}_stock`] = 'Valid stock quantity is required';
+            }
+          });
+        }
+        break;
+
+      case 2: // Media
+        if (formData.images.length === 0) {
+          errors.images = 'At least one product image is required';
+        }
+        break;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const removeVariant = (index: number) => {
-    setVariants(variants.filter((_, i) => i !== index));
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
+    }
   };
 
-  const updateVariant = (index: number, field: string, value: string) => {
-    const updatedVariants = variants.map((variant, i) => 
-      i === index ? { ...variant, [field]: value } : variant
-    );
-    setVariants(updatedVariants);
+  const handlePrevious = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Product data:', { ...formData, variants });
-    // Handle form submission
+  const handleSubmit = () => {
+    if (validateStep(currentStep)) {
+      console.log('Product data:', formData);
+      // Handle form submission
+      alert('Product created successfully!');
+    }
+  };
+
+  const updateFormData = (updates: Partial<ProductFormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <BasicDetailsTab
+            formData={formData}
+            updateFormData={updateFormData}
+            categoryOptions={categoryOptions}
+            validationErrors={validationErrors}
+          />
+        );
+      case 1:
+        return (
+          <VariantsTab
+            formData={formData}
+            updateFormData={updateFormData}
+            categoryOptions={categoryOptions}
+            validationErrors={validationErrors}
+          />
+        );
+      case 2:
+        return (
+          <MediaTab
+            formData={formData}
+            updateFormData={updateFormData}
+            validationErrors={validationErrors}
+          />
+        );
+      case 3:
+        return (
+          <ReviewTab
+            formData={formData}
+            categoryOptions={categoryOptions}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -60,7 +273,7 @@ const AddProduct: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-serif font-bold text-slate-800">Add New Product</h1>
-          <p className="text-slate-600">Create a new jewelry product</p>
+          <p className="text-slate-600">Create a new jewelry product with detailed specifications</p>
         </div>
         <Link
           to="/admin/products"
@@ -71,313 +284,79 @@ const AddProduct: React.FC = () => {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Product Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Product Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="input-elegant"
-                  placeholder="Enter product name"
-                  required
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="input-elegant"
-                  placeholder="Enter product description"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Category *
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  className="input-elegant"
-                  required
-                >
-                  <option value="">Select category</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Material
-                </label>
-                <select
-                  name="material"
-                  value={formData.material}
-                  onChange={handleInputChange}
-                  className="input-elegant"
-                >
-                  <option value="">Select material</option>
-                  {materials.map(material => (
-                    <option key={material} value={material}>
-                      {material}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Gemstone
-                </label>
-                <select
-                  name="gemstone"
-                  value={formData.gemstone}
-                  onChange={handleInputChange}
-                  className="input-elegant"
-                >
-                  <option value="">Select gemstone</option>
-                  {gemstones.map(gemstone => (
-                    <option key={gemstone} value={gemstone}>
-                      {gemstone}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Size
-                </label>
-                <input
-                  type="text"
-                  name="size"
-                  value={formData.size}
-                  onChange={handleInputChange}
-                  className="input-elegant"
-                  placeholder="e.g., 7, Medium, Adjustable"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Pricing</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Price *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="input-elegant pl-8"
-                    placeholder="0.00"
-                    step="0.01"
-                    required
-                  />
+      {/* Progress Steps */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between">
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex items-center">
+              <div className="flex items-center">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
+                  index < currentStep 
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : index === currentStep
+                    ? 'bg-primary-500 border-primary-500 text-white'
+                    : 'bg-white border-slate-300 text-slate-500'
+                }`}>
+                  {index < currentStep ? <Check size={20} /> : step.icon}
+                </div>
+                <div className="ml-3">
+                  <p className={`text-sm font-medium ${
+                    index <= currentStep ? 'text-slate-800' : 'text-slate-500'
+                  }`}>
+                    {step.label}
+                  </p>
                 </div>
               </div>
+              {index < steps.length - 1 && (
+                <div className={`flex-1 h-0.5 mx-4 ${
+                  index < currentStep ? 'bg-green-500' : 'bg-slate-300'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Original Price (Optional)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
-                  <input
-                    type="number"
-                    name="originalPrice"
-                    value={formData.originalPrice}
-                    onChange={handleInputChange}
-                    className="input-elegant pl-8"
-                    placeholder="0.00"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Step Content */}
+      <div className="card p-6 min-h-[500px]">
+        {renderStepContent()}
+      </div>
 
-          {/* Product Variants */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">Product Variants</h2>
-              <button
-                type="button"
-                onClick={addVariant}
-                className="btn-secondary flex items-center space-x-2 text-sm"
-              >
-                <Plus size={16} />
-                <span>Add Variant</span>
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {variants.map((variant, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Size
-                    </label>
-                    <input
-                      type="text"
-                      value={variant.size}
-                      onChange={(e) => updateVariant(index, 'size', e.target.value)}
-                      className="input-elegant"
-                      placeholder="Size"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Price
-                    </label>
-                    <input
-                      type="number"
-                      value={variant.price}
-                      onChange={(e) => updateVariant(index, 'price', e.target.value)}
-                      className="input-elegant"
-                      placeholder="0.00"
-                      step="0.01"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Stock
-                    </label>
-                    <input
-                      type="number"
-                      value={variant.stock}
-                      onChange={(e) => updateVariant(index, 'stock', e.target.value)}
-                      className="input-elegant"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(index)}
-                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      disabled={variants.length === 1}
-                    >
-                      <Minus size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handlePrevious}
+          disabled={currentStep === 0}
+          className={`btn-secondary flex items-center space-x-2 ${
+            currentStep === 0 ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          <ArrowLeft size={20} />
+          <span>Previous</span>
+        </button>
+
+        <div className="text-sm text-slate-600">
+          Step {currentStep + 1} of {steps.length}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Product Images */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Product Images</h2>
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary-400 transition-colors">
-              <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-              <p className="text-slate-600 mb-2">Drop images here or click to upload</p>
-              <p className="text-sm text-slate-500">PNG, JPG up to 10MB</p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                id="image-upload"
-              />
-              <label
-                htmlFor="image-upload"
-                className="btn-secondary mt-4 cursor-pointer inline-flex items-center space-x-2"
-              >
-                <Upload size={16} />
-                <span>Choose Files</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Product Status */}
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">Product Status</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">
-                  In Stock
-                </label>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="inStock"
-                    checked={formData.inStock}
-                    onChange={handleInputChange}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">
-                  Featured Product
-                </label>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    checked={formData.featured}
-                    onChange={handleInputChange}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="card p-6">
-            <div className="space-y-3">
-              <button
-                type="submit"
-                className="btn-primary w-full flex items-center justify-center space-x-2"
-              >
-                <Save size={20} />
-                <span>Save Product</span>
-              </button>
-              <button
-                type="button"
-                className="btn-secondary w-full"
-              >
-                Save as Draft
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
+        {currentStep === steps.length - 1 ? (
+          <button
+            onClick={handleSubmit}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Save size={20} />
+            <span>Create Product</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleNext}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <span>Next</span>
+            <ArrowRight size={20} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
