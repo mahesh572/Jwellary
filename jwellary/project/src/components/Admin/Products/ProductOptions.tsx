@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Settings, Link, Unlink, Tag } from 'lucide-react';
+import { mockCategories } from '../../../data/mockData';
 
 interface Option {
   id: string;
@@ -8,6 +9,7 @@ interface Option {
   values: string[];
   required: boolean;
   sortOrder: number;
+  categories: string[]; // Array of category IDs this option applies to
 }
 
 const ProductOptions: React.FC = () => {
@@ -19,6 +21,7 @@ const ProductOptions: React.FC = () => {
       values: ['5', '6', '7', '8', '9', '10', '11', '12'],
       required: true,
       sortOrder: 1,
+      categories: ['1'], // Only for Rings
     },
     {
       id: '2',
@@ -27,6 +30,7 @@ const ProductOptions: React.FC = () => {
       values: ['Gold', 'Silver', 'Platinum', 'Rose Gold'],
       required: true,
       sortOrder: 2,
+      categories: ['1', '2', '3', '4'], // For multiple categories
     },
     {
       id: '3',
@@ -35,6 +39,7 @@ const ProductOptions: React.FC = () => {
       values: [],
       required: false,
       sortOrder: 3,
+      categories: [], // Available for all categories
     },
     {
       id: '4',
@@ -43,16 +48,20 @@ const ProductOptions: React.FC = () => {
       values: ['Standard Box', 'Premium Box', 'Gift Bag'],
       required: false,
       sortOrder: 4,
+      categories: [], // Available for all categories
     },
   ]);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingOption, setEditingOption] = useState<Option | null>(null);
+  const [mappingOption, setMappingOption] = useState<Option | null>(null);
   const [newOption, setNewOption] = useState<Partial<Option>>({
     name: '',
     type: 'select',
     values: [],
     required: false,
+    categories: [],
   });
 
   const handleAddOption = () => {
@@ -64,9 +73,10 @@ const ProductOptions: React.FC = () => {
         values: newOption.values || [],
         required: newOption.required || false,
         sortOrder: options.length + 1,
+        categories: newOption.categories || [],
       };
       setOptions([...options, option]);
-      setNewOption({ name: '', type: 'select', values: [], required: false });
+      setNewOption({ name: '', type: 'select', values: [], required: false, categories: [] });
       setShowAddModal(false);
     }
   };
@@ -91,6 +101,21 @@ const ProductOptions: React.FC = () => {
     ));
   };
 
+  const handleCategoryMapping = (optionId: string, categoryIds: string[]) => {
+    setOptions(options.map(option => 
+      option.id === optionId 
+        ? { ...option, categories: categoryIds }
+        : option
+    ));
+    setShowCategoryModal(false);
+    setMappingOption(null);
+  };
+
+  const getCategoryName = (categoryId: string) => {
+    const category = mockCategories.find(cat => cat.id === categoryId);
+    return category ? category.name : 'Unknown';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -109,7 +134,7 @@ const ProductOptions: React.FC = () => {
       </div>
 
       {/* Options List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         {options.map((option) => (
           <div key={option.id} className="card p-6">
             <div className="flex items-center justify-between mb-4">
@@ -131,7 +156,17 @@ const ProductOptions: React.FC = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => {
+                    setMappingOption(option);
+                    setShowCategoryModal(true);
+                  }}
+                  className="p-2 text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  title="Manage Categories"
+                >
+                  <Link size={16} />
+                </button>
                 <button
                   onClick={() => setEditingOption(option)}
                   className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -145,6 +180,26 @@ const ProductOptions: React.FC = () => {
                   <Trash2 size={16} />
                 </button>
               </div>
+            </div>
+
+            {/* Category Mapping Display */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-2">Applied to Categories:</h4>
+              {option.categories.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {option.categories.map((categoryId) => (
+                    <span
+                      key={categoryId}
+                      className="inline-flex items-center px-3 py-1 text-sm bg-primary-100 text-primary-800 rounded-full"
+                    >
+                      <Tag size={12} className="mr-1" />
+                      {getCategoryName(categoryId)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-slate-500 italic">Available for all categories</span>
+              )}
             </div>
 
             {option.type !== 'text' && (
@@ -180,7 +235,7 @@ const ProductOptions: React.FC = () => {
 
       {/* Add Option Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold text-slate-800 mb-4">Add New Option</h2>
             
@@ -226,6 +281,41 @@ const ProductOptions: React.FC = () => {
                   Required field
                 </label>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Apply to Categories (leave empty for all)
+                </label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {mockCategories.map(category => (
+                    <div key={category.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`cat-${category.id}`}
+                        checked={newOption.categories?.includes(category.id) || false}
+                        onChange={(e) => {
+                          const currentCategories = newOption.categories || [];
+                          if (e.target.checked) {
+                            setNewOption({ 
+                              ...newOption, 
+                              categories: [...currentCategories, category.id] 
+                            });
+                          } else {
+                            setNewOption({ 
+                              ...newOption, 
+                              categories: currentCategories.filter(id => id !== category.id) 
+                            });
+                          }
+                        }}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded"
+                      />
+                      <label htmlFor={`cat-${category.id}`} className="ml-2 text-sm text-slate-700">
+                        {category.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-end space-x-3 mt-6">
@@ -240,6 +330,68 @@ const ProductOptions: React.FC = () => {
                 className="btn-primary"
               >
                 Add Option
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Mapping Modal */}
+      {showCategoryModal && mappingOption && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">
+              Manage Categories for "{mappingOption.name}"
+            </h2>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">
+                Select which categories this option should be available for. Leave all unchecked to make it available for all categories.
+              </p>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {mockCategories.map(category => (
+                  <div key={category.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`mapping-${category.id}`}
+                        checked={mappingOption.categories.includes(category.id)}
+                        onChange={(e) => {
+                          const updatedCategories = e.target.checked
+                            ? [...mappingOption.categories, category.id]
+                            : mappingOption.categories.filter(id => id !== category.id);
+                          setMappingOption({ ...mappingOption, categories: updatedCategories });
+                        }}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded"
+                      />
+                      <label htmlFor={`mapping-${category.id}`} className="ml-3 text-sm font-medium text-slate-700">
+                        {category.name}
+                      </label>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      {category.productCount} products
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setMappingOption(null);
+                }}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCategoryMapping(mappingOption.id, mappingOption.categories)}
+                className="btn-primary"
+              >
+                Save Mapping
               </button>
             </div>
           </div>
@@ -262,6 +414,7 @@ const ProductOptions: React.FC = () => {
               <option>Show all options expanded</option>
               <option>Show options collapsed</option>
               <option>Show required options only</option>
+              <option>Show by category</option>
             </select>
           </div>
           
@@ -273,6 +426,17 @@ const ProductOptions: React.FC = () => {
               <option>Validate on selection</option>
               <option>Validate on form submit</option>
               <option>No validation</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Category-specific Options
+            </label>
+            <select className="input-elegant">
+              <option>Show mapped options only</option>
+              <option>Show all options + mapped</option>
+              <option>Hide unmapped options</option>
             </select>
           </div>
         </div>
