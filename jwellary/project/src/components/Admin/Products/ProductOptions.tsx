@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Settings, Link, Unlink, Tag } from 'lucide-react';
-import { mockCategories } from '../../../data/mockData';
+import { categoriesService, CategoryFlat } from '../../../services/categoriesService';
 
 interface Option {
   id: string;
@@ -13,6 +13,25 @@ interface Option {
 }
 
 const ProductOptions: React.FC = () => {
+  const [availableCategories, setAvailableCategories] = useState<CategoryFlat[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const hierarchy = await categoriesService.getHierarchy();
+        const flatCategories = categoriesService.flattenCategories(hierarchy);
+        setAvailableCategories(flatCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const [options, setOptions] = useState<Option[]>([
     {
       id: '1',
@@ -112,7 +131,7 @@ const ProductOptions: React.FC = () => {
   };
 
   const getCategoryName = (categoryId: string) => {
-    const category = mockCategories.find(cat => cat.id === categoryId);
+    const category = availableCategories.find(cat => cat.id === categoryId);
     return category ? category.name : 'Unknown';
   };
 
@@ -313,7 +332,8 @@ const ProductOptions: React.FC = () => {
                         {category.name}
                       </label>
                     </div>
-                  ))}
+                  ))
+                )}
                 </div>
               </div>
             </div>
@@ -350,7 +370,13 @@ const ProductOptions: React.FC = () => {
               </p>
               
               <div className="space-y-3 max-h-64 overflow-y-auto">
-                {mockCategories.map(category => (
+                {loadingCategories ? (
+                  <div className="text-sm text-slate-500 p-3">Loading categories...</div>
+                ) : (
+                  availableCategories.map(category => (
+                  <div className="text-sm text-slate-500">Loading categories...</div>
+                ) : (
+                  availableCategories.map(category => (
                   <div key={category.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                     <div className="flex items-center">
                       <input
@@ -370,10 +396,11 @@ const ProductOptions: React.FC = () => {
                       </label>
                     </div>
                     <span className="text-xs text-slate-500">
-                      {category.productCount} products
+                      Products
                     </span>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 

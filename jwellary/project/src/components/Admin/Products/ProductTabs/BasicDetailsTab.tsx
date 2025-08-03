@@ -1,6 +1,6 @@
 import React from 'react';
 import { Save, Loader } from 'lucide-react';
-import { mockCategories } from '../../../../data/mockData';
+import { categoriesService, CategoryFlat } from '../../../../services/categoriesService';
 
 interface BasicDetailsTabProps {
   formData: any;
@@ -11,6 +11,34 @@ interface BasicDetailsTabProps {
   isSavingDraft?: boolean;
   productId?: string;
 }
+
+const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
+  formData,
+  updateFormData,
+  categoryOptions,
+  validationErrors,
+  onSaveDraft,
+  isSavingDraft = false,
+  productId
+}) => {
+  const [categories, setCategories] = React.useState<CategoryFlat[]>([]);
+  const [loadingCategories, setLoadingCategories] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const hierarchy = await categoriesService.getHierarchy();
+        const flatCategories = categoriesService.flattenCategories(hierarchy);
+        setCategories(flatCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
 const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
   formData,

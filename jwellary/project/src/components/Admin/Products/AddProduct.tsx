@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockCategories } from '../../../data/mockData';
+import { categoriesService } from '../../../services/categoriesService';
 import axios from 'axios';
 import BasicDetailsTab from './ProductTabs/BasicDetailsTab';
 import VariantsTab from './ProductTabs/VariantsTab';

@@ -85,51 +85,6 @@ export const mockProducts: Product[] = [
   }
 ];
 
-export const mockCategoriesFallback: Category[] = [
-  {
-    id: '1',
-    name: 'Rings',
-    image: 'https://images.pexels.com/photos/1446944/pexels-photo-1446944.jpeg?auto=compress&cs=tinysrgb&w=300',
-    productCount: 45,
-    description: 'Engagement rings, wedding bands, and statement pieces'
-  },
-  {
-    id: '2',
-    name: 'Necklaces',
-    image: 'https://images.pexels.com/photos/1121123/pexels-photo-1121123.jpeg?auto=compress&cs=tinysrgb&w=300',
-    productCount: 32,
-    description: 'Elegant chains, pendants, and statement necklaces'
-  },
-  {
-    id: '3',
-    name: 'Earrings',
-    image: 'https://images.pexels.com/photos/1454168/pexels-photo-1454168.jpeg?auto=compress&cs=tinysrgb&w=300',
-    productCount: 28,
-    description: 'Studs, hoops, and drop earrings for every occasion'
-  },
-  {
-    id: '4',
-    name: 'Bracelets',
-    image: 'https://images.pexels.com/photos/1454169/pexels-photo-1454169.jpeg?auto=compress&cs=tinysrgb&w=300',
-    productCount: 19,
-    description: 'Tennis bracelets, bangles, and charm bracelets'
-  },
-  {
-    id: '5',
-    name: 'Watches',
-    image: 'https://images.pexels.com/photos/1454169/pexels-photo-1454169.jpeg?auto=compress&cs=tinysrgb&w=300',
-    productCount: 15,
-    description: 'Luxury timepieces and elegant dress watches'
-  }
-];
-
-// Export function to get categories (API or fallback)
-export const getMockCategories = (): Category[] => {
-  return apiCategories.length > 0 ? apiCategories : mockCategoriesFallback;
-};
-
-export const mockCategories = getMockCategories();
-
 export const mockUsers: User[] = [
   {
     id: '1',

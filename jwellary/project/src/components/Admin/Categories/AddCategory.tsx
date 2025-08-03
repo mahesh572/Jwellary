@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Save, X, Upload, Image as ImageIcon, FolderOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { categoriesService, CategoryFlat } from '../../../services/categoriesService';
+import axios from 'axios';
 
 const AddCategory: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -21,14 +23,24 @@ const AddCategory: React.FC = () => {
   });
 
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [parentCategories, setParentCategories] = useState<CategoryFlat[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const parentCategories = [
-    { id: '1', name: 'Rings' },
-    { id: '2', name: 'Necklaces' },
-    { id: '3', name: 'Earrings' },
-    { id: '4', name: 'Bracelets' },
-    { id: '5', name: 'Watches' },
-  ];
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const hierarchy = await categoriesService.getHierarchy();
+        const flatCategories = categoriesService.flattenCategories(hierarchy);
+        setParentCategories(flatCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -171,11 +183,15 @@ const AddCategory: React.FC = () => {
                    disabled={!!parentId}
                   >
                     <option value="">No Parent (Top Level)</option>
-                    {parentCategories.map(category => (
+                    {loadingCategories ? (
+                      <option disabled>Loading categories...</option>
+                    ) : (
+                      parentCategories.map(category => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>
-                    ))}
+                      ))
+                    )}
                   </select>
                  {parentId && (
                    <p className="text-xs text-slate-500 mt-1">
