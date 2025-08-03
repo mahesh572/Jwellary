@@ -1,31 +1,33 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Eye, EyeOff, Crown, Loader } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { loginUser, clearError } from '../../store/slices/authSlice';
 
-const SignIn: React.FC = () => {
+const SignIn = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const { login, state } = useAuth();
+  
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isLoading, error } = useSelector((state) => state.auth);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    dispatch(clearError());
 
     try {
-      await login(formData.email, formData.password);
+      await dispatch(loginUser(formData)).unwrap();
       navigate('/');
     } catch (err) {
-      setError('Invalid email or password');
+      // Error is handled by Redux
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -130,10 +132,10 @@ const SignIn: React.FC = () => {
             <div>
               <button
                 type="submit"
-                disabled={state.isLoading}
+                disabled={isLoading}
                 className="btn-primary w-full flex items-center justify-center"
               >
-                {state.isLoading ? (
+                {isLoading ? (
                   <>
                     <Loader className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Signing in...

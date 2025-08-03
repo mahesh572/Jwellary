@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Eye, EyeOff, Crown, Loader } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { registerUser, clearError } from '../../store/slices/authSlice';
 
-const SignUp: React.FC = () => {
+const SignUp = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -13,38 +14,43 @@ const SignUp: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
-  const { register, state } = useAuth();
+  const [validationError, setValidationError] = useState('');
+  
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isLoading, error } = useSelector((state) => state.auth);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setValidationError('');
+    dispatch(clearError());
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setValidationError('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setValidationError('Password must be at least 6 characters long');
       return;
     }
 
     try {
-      await register(formData.email, formData.password, formData.firstName, formData.lastName);
+      await dispatch(registerUser(formData)).unwrap();
       navigate('/');
     } catch (err) {
-      setError('Failed to create account. Please try again.');
+      // Error is handled by Redux
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
+
+  const displayError = validationError || error;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-white to-primary-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -65,9 +71,9 @@ const SignUp: React.FC = () => {
 
         <div className="card p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {displayError && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
-                {error}
+                {displayError}
               </div>
             )}
 
@@ -207,10 +213,10 @@ const SignUp: React.FC = () => {
             <div>
               <button
                 type="submit"
-                disabled={state.isLoading}
+                disabled={isLoading}
                 className="btn-primary w-full flex items-center justify-center"
               >
-                {state.isLoading ? (
+                {isLoading ? (
                   <>
                     <Loader className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Creating account...
