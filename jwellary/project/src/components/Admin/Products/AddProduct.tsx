@@ -25,8 +25,7 @@ interface ProductFormData {
   }>;
   
   // Media
-  images: string[];
-  videos: string[];
+  variantImages: Record<string, string[]>; // variantId -> image URLs
   
   // Additional
   inStock: boolean;
@@ -41,8 +40,7 @@ const AddProduct: React.FC = () => {
     basePrice: '',
     category: '',
     variants: [],
-    images: [],
-    videos: [],
+    variantImages: {},
     inStock: true,
     featured: false,
   });
@@ -186,8 +184,11 @@ const AddProduct: React.FC = () => {
         break;
 
       case 2: // Media
-        if (formData.images.length === 0) {
-          errors.images = 'At least one product image is required';
+        const hasImages = Object.values(formData.variantImages || {}).some(
+          (images: string[]) => images.length > 0
+        );
+        if (!hasImages) {
+          errors.images = 'At least one variant must have images';
         }
         break;
     }

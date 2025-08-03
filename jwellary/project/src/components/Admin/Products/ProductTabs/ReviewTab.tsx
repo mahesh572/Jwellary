@@ -14,6 +14,9 @@ const ReviewTab: React.FC<ReviewTabProps> = ({ formData, categoryOptions }) => {
 
   const totalVariants = formData.variants.length;
   const totalStock = formData.variants.reduce((sum: number, variant: any) => sum + parseInt(variant.stock || '0'), 0);
+  const totalImages = Object.values(formData.variantImages || {}).reduce(
+    (sum: number, images: string[]) => sum + images.length, 0
+  );
   const priceRange = formData.variants.length > 0 
     ? {
         min: Math.min(...formData.variants.map((v: any) => parseFloat(v.price || '0'))),
@@ -44,10 +47,10 @@ const ReviewTab: React.FC<ReviewTabProps> = ({ formData, categoryOptions }) => {
     },
     {
       label: 'Media',
-      completed: formData.images.length > 0,
+      completed: Object.values(formData.variantImages || {}).some((images: string[]) => images.length > 0),
       items: [
-        { label: 'At least one image', completed: formData.images.length > 0 },
-        { label: 'Main image selected', completed: formData.images.length > 0 },
+        { label: 'At least one variant has images', completed: Object.values(formData.variantImages || {}).some((images: string[]) => images.length > 0) },
+        { label: 'Images uploaded for variants', completed: totalImages > 0 },
       ]
     }
   ];
@@ -164,13 +167,17 @@ const ReviewTab: React.FC<ReviewTabProps> = ({ formData, categoryOptions }) => {
             </div>
             
             <div className="text-center p-3 bg-slate-50 rounded-lg">
-              <p className="text-2xl font-bold text-slate-800">{formData.images.length}</p>
+              <p className="text-2xl font-bold text-slate-800">{totalImages}</p>
               <p className="text-sm text-slate-600">Images</p>
             </div>
             
             <div className="text-center p-3 bg-slate-50 rounded-lg">
-              <p className="text-2xl font-bold text-slate-800">{formData.videos.length}</p>
-              <p className="text-sm text-slate-600">Videos</p>
+              <p className="text-2xl font-bold text-slate-800">
+                {Object.keys(formData.variantImages || {}).filter(id => 
+                  formData.variantImages[id]?.length > 0
+                ).length}
+              </p>
+              <p className="text-sm text-slate-600">Variants with Images</p>
             </div>
           </div>
 
@@ -222,28 +229,42 @@ const ReviewTab: React.FC<ReviewTabProps> = ({ formData, categoryOptions }) => {
       )}
 
       {/* Media Preview */}
-      {formData.images.length > 0 && (
+      {totalImages > 0 && (
         <div className="card p-6">
           <div className="flex items-center space-x-2 mb-4">
             <ImageIcon className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-slate-800">Media Preview</h3>
+            <h3 className="text-lg font-semibold text-slate-800">Variant Images Preview</h3>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {formData.images.map((image: string, index: number) => (
-              <div key={index} className="relative">
-                <img
-                  src={image}
-                  alt={`Product ${index + 1}`}
-                  className="w-full h-20 object-cover rounded-lg border border-slate-200"
-                />
-                {index === 0 && (
-                  <div className="absolute top-1 left-1 bg-primary-500 text-white text-xs px-1 py-0.5 rounded">
-                    Main
+          <div className="space-y-4">
+            {formData.variants.map((variant: any) => {
+              const variantImages = formData.variantImages?.[variant.id] || [];
+              if (variantImages.length === 0) return null;
+              
+              const variantName = variant.name || Object.values(variant.options || {}).join(' - ') || `Variant ${formData.variants.indexOf(variant) + 1}`;
+              
+              return (
+                <div key={variant.id}>
+                  <h4 className="text-sm font-medium text-slate-700 mb-2">{variantName}</h4>
+                  <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {variantImages.map((image: string, index: number) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={image}
+                          alt={`${variantName} ${index + 1}`}
+                          className="w-full h-16 object-cover rounded-lg border border-slate-200"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-1 left-1 bg-primary-500 text-white text-xs px-1 py-0.5 rounded">
+                            Main
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
