@@ -135,6 +135,13 @@ const ProductOptions: React.FC = () => {
     return category ? category.name : 'Unknown';
   };
 
+  const mockCategories = [
+    { id: '1', name: 'Rings' },
+    { id: '2', name: 'Necklaces' },
+    { id: '3', name: 'Bracelets' },
+    { id: '4', name: 'Earrings' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -332,8 +339,7 @@ const ProductOptions: React.FC = () => {
                         {category.name}
                       </label>
                     </div>
-                  ))
-                )}
+                  ))}
                 </div>
               </div>
             </div>
@@ -374,31 +380,28 @@ const ProductOptions: React.FC = () => {
                   <div className="text-sm text-slate-500 p-3">Loading categories...</div>
                 ) : (
                   availableCategories.map(category => (
-                  <div className="text-sm text-slate-500">Loading categories...</div>
-                ) : (
-                  availableCategories.map(category => (
-                  <div key={category.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`mapping-${category.id}`}
-                        checked={mappingOption.categories.includes(category.id)}
-                        onChange={(e) => {
-                          const updatedCategories = e.target.checked
-                            ? [...mappingOption.categories, category.id]
-                            : mappingOption.categories.filter(id => id !== category.id);
-                          setMappingOption({ ...mappingOption, categories: updatedCategories });
-                        }}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded"
-                      />
-                      <label htmlFor={`mapping-${category.id}`} className="ml-3 text-sm font-medium text-slate-700">
-                        {category.name}
-                      </label>
+                    <div key={category.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`mapping-${category.id}`}
+                          checked={mappingOption.categories.includes(category.id)}
+                          onChange={(e) => {
+                            const updatedCategories = e.target.checked
+                              ? [...mappingOption.categories, category.id]
+                              : mappingOption.categories.filter(id => id !== category.id);
+                            setMappingOption({ ...mappingOption, categories: updatedCategories });
+                          }}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded"
+                        />
+                        <label htmlFor={`mapping-${category.id}`} className="ml-3 text-sm font-medium text-slate-700">
+                          {category.name}
+                        </label>
+                      </div>
+                      <span className="text-xs text-slate-500">
+                        Products
+                      </span>
                     </div>
-                    <span className="text-xs text-slate-500">
-                      Products
-                    </span>
-                  </div>
                   ))
                 )}
               </div>
