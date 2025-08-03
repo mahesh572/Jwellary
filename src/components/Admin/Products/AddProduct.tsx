@@ -13,7 +13,6 @@ interface ProductFormData {
   description: string;
   basePrice: string;
   category: string;
-  selectedOptions: Record<string, string>;
   
   // Variants
   variants: Array<{
@@ -41,7 +40,6 @@ const AddProduct: React.FC = () => {
     description: '',
     basePrice: '',
     category: '',
-    selectedOptions: {},
     variants: [],
     images: [],
     videos: [],
@@ -151,8 +149,6 @@ const AddProduct: React.FC = () => {
     if (formData.category) {
       const options = getCategoryOptions(formData.category);
       setCategoryOptions(options);
-      // Reset selected options when category changes
-      setFormData(prev => ({ ...prev, selectedOptions: {} }));
     }
   }, [formData.category]);
 
@@ -167,13 +163,6 @@ const AddProduct: React.FC = () => {
           errors.basePrice = 'Valid base price is required';
         }
         if (!formData.category) errors.category = 'Category is required';
-        
-        // Validate required options
-        categoryOptions.forEach(option => {
-          if (option.required && !formData.selectedOptions[option.id]) {
-            errors[option.id] = `${option.name} is required`;
-          }
-        });
         break;
 
       case 1: // Variants

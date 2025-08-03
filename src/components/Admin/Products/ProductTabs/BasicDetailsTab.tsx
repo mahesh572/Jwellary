@@ -114,37 +114,6 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
         </div>
       </div>
 
-      {/* Category-based Options */}
-      {categoryOptions.length > 0 && (
-        <div className="border-t border-slate-200 pt-6">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Category Options</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {categoryOptions.map(option => (
-              <div key={option.id}>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  {option.name} {option.required && '*'}
-                </label>
-                <select
-                  value={formData.selectedOptions[option.id] || ''}
-                  onChange={(e) => handleOptionChange(option.id, e.target.value)}
-                  className={`input-elegant ${validationErrors[option.id] ? 'border-red-500' : ''}`}
-                >
-                  <option value="">Select {option.name.toLowerCase()}</option>
-                  {option.values.map((value: string) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-                {validationErrors[option.id] && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors[option.id]}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Additional Settings */}
       <div className="border-t border-slate-200 pt-6">
         <h3 className="text-lg font-semibold text-slate-800 mb-4">Additional Settings</h3>
