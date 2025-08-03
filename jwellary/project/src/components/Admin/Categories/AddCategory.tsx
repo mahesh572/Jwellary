@@ -62,8 +62,38 @@ const AddCategory: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Category data:', formData);
-    // Handle form submission
+    
+    // Prepare API payload
+    const payload = {
+      name: formData.name,
+      parentId: formData.parentId ? parseInt(formData.parentId) : 0,
+      id: null
+    };
+
+    // Call API
+    fetch('http://localhost:8080/api/categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Category created successfully:', data);
+      alert('Category created successfully!');
+      // Optionally redirect or reset form
+      // navigate('/admin/categories');
+    })
+    .catch(error => {
+      console.error('Error creating category:', error);
+      alert('Failed to create category. Please try again.');
+    });
   };
 
   return (

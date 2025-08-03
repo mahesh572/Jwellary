@@ -148,19 +148,49 @@ export const useCategories = () => {
   }, []);
 
   const addCategory = useCallback((formData: CategoryFormData) => {
-    const newCategory: Category = {
-      id: generateId(),
+    // Prepare API payload
+    const payload = {
       name: formData.name,
-      description: formData.description,
-      itemCount: 0,
-      sortOrder: formData.sortOrder,
-      status: formData.status,
-      parentId: formData.parentId,
-      children: [],
-      isExpanded: false
+      parentId: formData.parentId ? parseInt(formData.parentId) : 0,
+      id: null
     };
 
-    setCategories(prev => addCategoryRecursive(prev, formData.parentId, newCategory));
+    // Call API
+    fetch('http://localhost:8080/api/categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to create category');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Category created successfully:', data);
+      
+      // Create local category object with server response
+      const newCategory: Category = {
+        id: data.id || generateId(),
+        name: formData.name,
+        description: formData.description,
+        itemCount: 0,
+        sortOrder: formData.sortOrder,
+        status: formData.status,
+        parentId: formData.parentId,
+        children: [],
+        isExpanded: false
+      };
+
+      setCategories(prev => addCategoryRecursive(prev, formData.parentId, newCategory));
+    })
+    .catch(error => {
+      console.error('Error creating category:', error);
+      alert('Failed to create category. Please try again.');
+    });
   }, []);
 
   const updateCategory = useCallback((id: string, formData: CategoryFormData) => {

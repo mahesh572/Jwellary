@@ -93,8 +93,39 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
-      onClose();
+      // Prepare API payload
+      const payload = {
+        name: formData.name,
+        parentId: formData.parentId ? parseInt(formData.parentId) : 0,
+        id: category ? category.id : null
+      };
+
+      // Call API
+      const apiUrl = 'http://localhost:8080/api/categories';
+      const method = category ? 'PUT' : 'POST';
+      
+      fetch(apiUrl, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to ${category ? 'update' : 'create'} category`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log(`Category ${category ? 'updated' : 'created'} successfully:`, data);
+        onSubmit(formData);
+        onClose();
+      })
+      .catch(error => {
+        console.error(`Error ${category ? 'updating' : 'creating'} category:`, error);
+        alert(`Failed to ${category ? 'update' : 'create'} category. Please try again.`);
+      });
     }
   };
 
