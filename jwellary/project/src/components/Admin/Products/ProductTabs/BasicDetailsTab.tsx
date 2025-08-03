@@ -40,34 +40,6 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
     fetchCategories();
   }, []);
 
-const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
-  formData,
-  updateFormData,
-  categoryOptions,
-  validationErrors,
-  onSaveDraft,
-  isSavingDraft = false,
-  productId
-}) => {
-  const [categories, setCategories] = useState<CategoryFlat[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true);
-        const hierarchy = await categoriesService.getHierarchy();
-        const flatCategories = categoriesService.flattenCategories(hierarchy);
-        setCategories(flatCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-    fetchCategories();
-  }, []);
-
   const handleInputChange = (field: string, value: string) => {
     updateFormData({ [field]: value });
   };
