@@ -142,19 +142,6 @@ const ReviewTab: React.FC<ReviewTabProps> = ({ formData, categoryOptions }) => {
                 {formData.description || 'No description provided'}
               </p>
             </div>
-
-            {Object.keys(formData.selectedOptions).length > 0 && (
-              <div>
-                <label className="text-sm font-medium text-slate-600">Selected Options</label>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {Object.entries(formData.selectedOptions).map(([optionId, value]) => (
-                    <span key={optionId} className="inline-flex items-center px-2 py-1 text-xs bg-primary-100 text-primary-800 rounded-full">
-                      {getOptionName(optionId)}: {value as string}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

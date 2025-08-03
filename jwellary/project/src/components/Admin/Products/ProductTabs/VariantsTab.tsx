@@ -21,7 +21,7 @@ const VariantsTab: React.FC<VariantsTabProps> = ({
       price: formData.basePrice || '',
       stock: '0',
       sku: '',
-      options: { ...formData.selectedOptions }
+      options: {}
     };
 
     updateFormData({
