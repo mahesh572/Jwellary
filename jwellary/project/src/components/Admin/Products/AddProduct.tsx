@@ -9,6 +9,7 @@ import ReviewTab from './ProductTabs/ReviewTab';
 
 interface ProductFormData {
   // Basic Details
+  id?: string; // Product ID returned from server
   name: string;
   description: string;
   basePrice: string;
@@ -47,6 +48,7 @@ const AddProduct: React.FC = () => {
 
   const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const steps = [
     { id: 'basic', label: 'Basic Details', icon: '1' },
@@ -219,6 +221,54 @@ const AddProduct: React.FC = () => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    
+    try {
+      // Validate required fields
+      if (!formData.name || !formData.description || !formData.basePrice || !formData.category) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Prepare data for API
+      const draftData = {
+        name: formData.name,
+        description: formData.description,
+        basePrice: parseFloat(formData.basePrice),
+        category: formData.category,
+        inStock: formData.inStock,
+        featured: formData.featured,
+        status: 'draft'
+      };
+
+      // API call to save draft
+      const response = await fetch('/api/products/draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(draftData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save draft');
+      }
+
+      const result = await response.json();
+      
+      // Update form data with returned product ID
+      updateFormData({ id: result.productId });
+      
+      // Show success message (handled in BasicDetailsTab)
+      console.log('Draft saved successfully:', result);
+      
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      alert('Failed to save draft. Please try again.');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -228,6 +278,9 @@ const AddProduct: React.FC = () => {
             updateFormData={updateFormData}
             categoryOptions={categoryOptions}
             validationErrors={validationErrors}
+            onSaveDraft={handleSaveDraft}
+            isSavingDraft={isSavingDraft}
+            productId={formData.id}
           />
         );
       case 1:

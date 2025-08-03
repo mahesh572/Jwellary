@@ -1,4 +1,5 @@
 import React from 'react';
+import { Save, Loader } from 'lucide-react';
 import { mockCategories } from '../../../../data/mockData';
 
 interface BasicDetailsTabProps {
@@ -6,13 +7,19 @@ interface BasicDetailsTabProps {
   updateFormData: (updates: any) => void;
   categoryOptions: any[];
   validationErrors: Record<string, string>;
+  onSaveDraft?: () => Promise<void>;
+  isSavingDraft?: boolean;
+  productId?: string;
 }
 
 const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
   formData,
   updateFormData,
   categoryOptions,
-  validationErrors
+  validationErrors,
+  onSaveDraft,
+  isSavingDraft = false,
+  productId
 }) => {
   const handleInputChange = (field: string, value: string) => {
     updateFormData({ [field]: value });
@@ -27,11 +34,21 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
     });
   };
 
+  const handleSaveDraft = async () => {
+    if (onSaveDraft) {
+      await onSaveDraft();
+    }
+  };
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-800 mb-4">Basic Product Information</h2>
         <p className="text-slate-600 mb-6">Enter the fundamental details about your product</p>
+        {productId && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-4">
+            ✅ Product draft saved successfully! Product ID: <strong>{productId}</strong>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -114,6 +131,41 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
         </div>
       </div>
 
+      {/* Save Draft Section */}
+      <div className="border-t border-slate-200 pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-800">Save Progress</h3>
+            <p className="text-sm text-slate-600">Save your product as a draft to continue later</p>
+          </div>
+          <button
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || !formData.name || !formData.description || !formData.basePrice || !formData.category}
+            className={`btn-secondary flex items-center space-x-2 ${
+              isSavingDraft || !formData.name || !formData.description || !formData.basePrice || !formData.category
+                ? 'opacity-50 cursor-not-allowed' 
+                : ''
+            }`}
+          >
+            {isSavingDraft ? (
+              <>
+                <Loader className="animate-spin" size={16} />
+                <span>Saving Draft...</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>Save Draft</span>
+              </>
+            )}
+          </button>
+        </div>
+        {(!formData.name || !formData.description || !formData.basePrice || !formData.category) && (
+          <p className="text-xs text-slate-500 mt-2">
+            Please fill in all required fields (Name, Description, Base Price, Category) to save draft
+          </p>
+        )}
+      </div>
 
       {/* Additional Settings */}
       <div className="border-t border-slate-200 pt-6">
