@@ -21,6 +21,25 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
   isSavingDraft = false,
   productId
 }) => {
+  const [categories, setCategories] = useState<CategoryFlat[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const hierarchy = await categoriesService.getHierarchy();
+        const flatCategories = categoriesService.flattenCategories(hierarchy);
+        setCategories(flatCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     updateFormData({ [field]: value });
   };
@@ -117,14 +136,20 @@ const BasicDetailsTab: React.FC<BasicDetailsTabProps> = ({
             value={formData.category}
             onChange={(e) => handleInputChange('category', e.target.value)}
             className={`input-elegant ${validationErrors.category ? 'border-red-500' : ''}`}
+            disabled={loadingCategories}
           >
-            <option value="">Select a category</option>
-            {mockCategories.map(category => (
-              <option key={category.id} value={category.name.toLowerCase()}>
+            <option value="">
+              {loadingCategories ? 'Loading categories...' : 'Select a category'}
+            </option>
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
           </select>
+          {loadingCategories && (
+            <p className="mt-1 text-sm text-slate-500">Loading categories from server...</p>
+          )}
           {validationErrors.category && (
             <p className="mt-1 text-sm text-red-600">{validationErrors.category}</p>
           )}

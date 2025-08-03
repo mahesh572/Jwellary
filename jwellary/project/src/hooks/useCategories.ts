@@ -228,6 +228,9 @@ export const useCategories = () => {
 
   return {
     categories: filteredCategories,
+    loading,
+    error,
+    refetch: () => fetchCategories(),
     searchTerm,
     setSearchTerm,
     addCategory,

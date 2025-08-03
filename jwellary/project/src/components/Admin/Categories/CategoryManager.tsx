@@ -59,6 +59,28 @@ export const CategoryManager: React.FC = () => {
     return count + countChildren(cat);
   }, 0);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-lg font-semibold mb-2">Error Loading Categories</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   const totalItems = categories.reduce((sum, cat) => {
     const sumItems = (category: Category): number => {
       return category.itemCount + category.children.reduce((childSum, child) => childSum + sumItems(child), 0);

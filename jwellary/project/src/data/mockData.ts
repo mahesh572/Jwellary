@@ -85,7 +85,7 @@ export const mockProducts: Product[] = [
   }
 ];
 
-export const mockCategories: Category[] = [
+export const mockCategoriesFallback: Category[] = [
   {
     id: '1',
     name: 'Rings',
@@ -122,6 +122,13 @@ export const mockCategories: Category[] = [
     description: 'Luxury timepieces and elegant dress watches'
   }
 ];
+
+// Export function to get categories (API or fallback)
+export const getMockCategories = (): Category[] => {
+  return apiCategories.length > 0 ? apiCategories : mockCategoriesFallback;
+};
+
+export const mockCategories = getMockCategories();
 
 export const mockUsers: User[] = [
   {

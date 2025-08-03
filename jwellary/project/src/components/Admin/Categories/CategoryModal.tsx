@@ -28,6 +28,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   });
 
   const [errors, setErrors] = useState<Partial<CategoryFormData>>({});
+  const [availableCategories, setAvailableCategories] = useState<CategoryFlat[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   useEffect(() => {
     if (category) {
@@ -58,6 +60,22 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     setErrors({});
   }, [category, parentCategory, isOpen]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const hierarchy = await categoriesService.getHierarchy();
+        const flatCategories = categoriesService.flattenCategories(hierarchy);
+        setAvailableCategories(flatCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, [isOpen]);
+
   const flattenCategories = (categories: Category[], level = 0): Array<Category & { level: number }> => {
     const result: Array<Category & { level: number }> = [];
     categories.forEach(cat => {
@@ -69,7 +87,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     return result;
   };
 
-  const flatCategories = flattenCategories(allCategories);
+  // const flatCategories = flattenCategories(allCategories);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CategoryFormData> = {};
@@ -194,11 +212,14 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               value={formData.parentId || ''}
               onChange={(e) => handleInputChange('parentId', e.target.value || null)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              disabled={loadingCategories}
             >
-              <option value="">None (Top Level)</option>
-              {flatCategories.map((cat) => (
+              <option value="">
+                {loadingCategories ? 'Loading...' : 'None (Top Level)'}
+              </option>
+              {availableCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {'  '.repeat(cat.level)}└ {cat.name}
+                  {cat.name}
                 </option>
               ))}
             </select>
