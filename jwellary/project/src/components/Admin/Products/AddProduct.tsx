@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mockCategories } from '../../../data/mockData';
+import axios from 'axios';
 import BasicDetailsTab from './ProductTabs/BasicDetailsTab';
 import VariantsTab from './ProductTabs/VariantsTab';
 import MediaTab from './ProductTabs/MediaTab';
@@ -242,25 +243,13 @@ const AddProduct: React.FC = () => {
       };
 
       // API call to save draft
-      const response = await fetch('/api/products/draft', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(draftData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save draft');
-      }
-
-      const result = await response.json();
+      const response = await axios.post('/api/products/draft', draftData);
       
       // Update form data with returned product ID
-      updateFormData({ id: result.productId });
+      updateFormData({ id: response.data.productId });
       
       // Show success message (handled in BasicDetailsTab)
-      console.log('Draft saved successfully:', result);
+      console.log('Draft saved successfully:', response.data);
       
     } catch (error) {
       console.error('Error saving draft:', error);

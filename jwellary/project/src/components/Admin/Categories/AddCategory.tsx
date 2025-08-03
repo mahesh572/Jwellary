@@ -71,29 +71,16 @@ const AddCategory: React.FC = () => {
     };
 
     // Call API
-    fetch('http://localhost:8080/api/categories', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to create category');
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Category created successfully:', data);
+    try {
+      const response = await axios.post('http://localhost:8080/api/categories', payload);
+      console.log('Category created successfully:', response.data);
       alert('Category created successfully!');
       // Optionally redirect or reset form
       // navigate('/admin/categories');
-    })
-    .catch(error => {
+    } catch (error) {
       console.error('Error creating category:', error);
       alert('Failed to create category. Please try again.');
-    });
+    }
   };
 
   return (

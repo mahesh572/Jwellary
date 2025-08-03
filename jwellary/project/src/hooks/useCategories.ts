@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Category, CategoryFormData } from '../types/Category';
+import { categoriesService } from '../services/categoriesService';
+import axios from 'axios';
 
 
 // Sample data with hierarchical structure
@@ -147,7 +149,7 @@ export const useCategories = () => {
     setCategories(prev => updateCategoryRecursive(prev, id, { isExpanded: !prev.find(c => c.id === id)?.isExpanded }));
   }, []);
 
-  const addCategory = useCallback((formData: CategoryFormData) => {
+  const addCategory = useCallback(async (formData: CategoryFormData) => {
     // Prepare API payload
     const payload = {
       name: formData.name,
@@ -155,26 +157,14 @@ export const useCategories = () => {
       id: null
     };
 
-    // Call API
-    fetch('http://localhost:8080/api/categories', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to create category');
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Category created successfully:', data);
+    try {
+      // Call API
+      const response = await axios.post('http://localhost:8080/api/categories', payload);
+      console.log('Category created successfully:', response.data);
       
       // Create local category object with server response
       const newCategory: Category = {
-        id: data.id || generateId(),
+        id: response.data.id || generateId(),
         name: formData.name,
         description: formData.description,
         itemCount: 0,
@@ -186,11 +176,10 @@ export const useCategories = () => {
       };
 
       setCategories(prev => addCategoryRecursive(prev, formData.parentId, newCategory));
-    })
-    .catch(error => {
+    } catch (error) {
       console.error('Error creating category:', error);
       alert('Failed to create category. Please try again.');
-    });
+    }
   }, []);
 
   const updateCategory = useCallback((id: string, formData: CategoryFormData) => {

@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export interface CategoryHierarchy {
   id: number;
   name: string;
@@ -16,11 +18,8 @@ class CategoriesService {
 
   async getHierarchy(): Promise<CategoryHierarchy[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/hierarchy`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch categories');
-      }
-      const data = await response.json();
+      const response = await axios.get(`${this.baseUrl}/hierarchy`);
+      const data = response.data;
       // API returns single object, but we need array for consistency
       return Array.isArray(data) ? data : [data];
     } catch (error) {

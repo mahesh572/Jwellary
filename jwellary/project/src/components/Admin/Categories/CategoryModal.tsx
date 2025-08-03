@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Category, CategoryFormData } from '../../../types/Category';
+import { categoriesService } from '../../../services/categoriesService';
+import axios from 'axios';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -108,7 +110,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       // Prepare API payload
@@ -118,32 +120,20 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         id: category ? category.id : null
       };
 
-      // Call API
-      const apiUrl = 'http://localhost:8080/api/categories';
-      const method = category ? 'PUT' : 'POST';
-      
-      fetch(apiUrl, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Failed to ${category ? 'update' : 'create'} category`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log(`Category ${category ? 'updated' : 'created'} successfully:`, data);
+      try {
+        // Call API
+        const apiUrl = 'http://localhost:8080/api/categories';
+        const response = category 
+          ? await axios.put(apiUrl, payload)
+          : await axios.post(apiUrl, payload);
+        
+        console.log(`Category ${category ? 'updated' : 'created'} successfully:`, response.data);
         onSubmit(formData);
         onClose();
-      })
-      .catch(error => {
+      } catch (error) {
         console.error(`Error ${category ? 'updating' : 'creating'} category:`, error);
         alert(`Failed to ${category ? 'update' : 'create'} category. Please try again.`);
-      });
+      }
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, X, Image as ImageIcon, Save, Eye, Move, Loader } from 'lucide-react';
+import axios from 'axios';
 
 interface MediaTabProps {
   formData: any;
@@ -120,32 +121,21 @@ const MediaTab: React.FC<MediaTabProps> = ({
       const images = formData.variantImages?.[variantId] || [];
       
       // Simulate API call to save images
-      const response = await fetch('/api/variants/images', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          variantId,
-          images: images
-        })
+      const response = await axios.post('/api/variants/images', {
+        variantId,
+        images: images
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        // Update with server URLs
-        updateFormData({
-          variantImages: {
-            ...formData.variantImages,
-            [variantId]: data.imageUrls
-          }
-        });
-        
-        // Show success message
-        alert('Images saved successfully!');
-      } else {
-        throw new Error('Failed to save images');
-      }
+      // Update with server URLs
+      updateFormData({
+        variantImages: {
+          ...formData.variantImages,
+          [variantId]: response.data.imageUrls
+        }
+      });
+      
+      // Show success message
+      alert('Images saved successfully!');
     } catch (error) {
       console.error('Error saving images:', error);
       alert('Failed to save images. Please try again.');
